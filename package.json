@@ -4,7 +4,8 @@
   "description": "Rate limiting stampede protection for express.",
   "main": "index.js",
   "scripts": {
-    "test": "istanbul cover --print both nodeunit test/index.js"
+    "test": "istanbul cover --print both nodeunit test/index.js",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/elliotttf/cattleguard#readme",
   "devDependencies": {
+    "coveralls": "^2.11.14",
     "ghooks": "^1.3.2",
     "istanbul": "^0.4.5",
     "node-cache": "^4.1.0",
