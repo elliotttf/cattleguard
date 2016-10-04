@@ -171,12 +171,18 @@ module.exports = {
         total: 1,
         expire: 1000
       },
-      Object.assign({
+      {
+        get: function (key, cb) {
+          cb();
+        },
+        set: function (key, val, cb) {
+          cb();
+        },
         pexpire: function (key, time) {
           test.equal('cattleguard', key, 'Unexpected key.');
           test.equal(1000, time, 'Unexpected expire.');
         }
-      }, nc)
+      }
     );
 
     cg({}, {}, function () {
