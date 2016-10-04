@@ -1,6 +1,9 @@
 # Cattleguard
 
-An express middleware for rate limiting an application.
+[![Build Status](https://travis-ci.org/elliotttf/cattleguard.svg?branch=master)](https://travis-ci.org/elliotttf/cattleguard)
+[![Coverage Status](https://coveralls.io/repos/github/elliotttf/cattleguard/badge.svg?branch=master)](https://coveralls.io/github/elliotttf/cattleguard?branch=master)
+
+An express middleware for rate limiting an application to provide stampede protection.
 
 ## Usage
 
@@ -58,12 +61,12 @@ app.post('/blogs', cattleguard(config), function (req, res, next) {
       * `next`: The method to execute after the on rate limited method, if
         needed.
   * `perRoute`: boolean, true if rate limiting should happen per route.
-    default: false
+    default: `false`
   * `perMethod`: boolean, true if rate limiting should happen per HTTP method.
-    default: false
+    default: `false`
   * `lookup`: function, used to return an identifier for the user requesting.
     This will have the effect of creating a per-user rate limit.
-    default: undefined
+    default: `undefined`
 * `store` - A store to maintain the rate limit counts in. Must provide get and
   setmethods and _may_ provide a pexpire method with the following signatures:
   * `get`: gets a value from the store.
