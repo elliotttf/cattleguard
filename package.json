@@ -32,5 +32,9 @@
   "engines": {
     "node": ">=0.12"
   },
-  "config": {}
+  "config": {
+    "ghooks": {
+      "pre-push": "npm test"
+    }
+  }
 }
