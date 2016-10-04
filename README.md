@@ -9,6 +9,9 @@ An express middleware for rate limiting an application to provide stampede prote
 
 ```javascript
 var cattleguard = require('cattleguard');
+var redis = require('redis');
+
+var client = redis.createClient();
 
 var config = {
  total: 300,
@@ -19,18 +22,18 @@ var config = {
 };
 
 // Rate limiting for _all_ routes.
-app.use(cattleguard(config));
+app.use(cattleguard(config, client));
 
 // Rate limiting for a single route.
 config.perRoute = true;
-app.post('/blogs', cattleguard(config), function (req, res, next) {
+app.post('/blogs', cattleguard(config, client), function (req, res, next) {
   // ...
 });
 
 // Rate limiting for a subset of routes based on method.
 config.perMethod = true;
 app.route('/blogs')
-  .all(cattleguard(config))
+  .all(cattleguard(config, client))
   .post(function (req, res, next) {
     // Will have its own rate limit.
   })
@@ -42,7 +45,7 @@ app.route('/blogs')
 config.lookup = function (req) {
   return req.headers['x-forwarded-for'];
 };
-app.post('/blogs', cattleguard(config), function (req, res, next) {
+app.post('/blogs', cattleguard(config, client), function (req, res, next) {
   // ...
 });
 
