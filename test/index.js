@@ -1,32 +1,32 @@
 'use strict';
 
-var cattleguard = require('../');
-var NodeCache = require('node-cache');
-var sinon = require('sinon');
+const cattleguard = require('../');
+const NodeCache = require('node-cache');
+const sinon = require('sinon');
 
-var nc = new NodeCache();
+const nc = new NodeCache();
 
 module.exports = {
-  setUp: function (cb) {
+  setUp(cb) {
     this.clock = sinon.useFakeTimers();
     cb();
   },
-  tearDown: function (cb) {
+  tearDown(cb) {
     this.clock.restore();
     nc.flushAll();
     cb();
   },
 
-  minimum: function (test) {
+  minimum(test) {
     test.expect(1);
 
-    var cg = cattleguard({
+    const cg = cattleguard({
       total: 1,
-      expire: 1000
+      expire: 1000,
     }, nc);
 
-    cg({}, {}, function () {
-      nc.get('cattleguard', function (err, limit) {
+    cg({}, {}, () => {
+      nc.get('cattleguard', (err, limit) => {
         if (err) {
           test.ok(false);
         }
@@ -47,37 +47,37 @@ module.exports = {
       });
     });
   },
-  limit: function (test) {
+  limit(test) {
     test.expect(2);
 
-    var cg = cattleguard({
+    const cg = cattleguard({
       total: 1,
       expire: 1000,
-      onRateLimited: function () {
+      onRateLimited() {
         test.done();
-      }
+      },
     }, nc);
 
-    cg({}, {}, function () {
+    cg({}, {}, () => {
       cg({}, {
-        set: function (key, val) {
+        set(key, val) {
           test.equal('Retry-After', key, 'Unexpected header.');
           test.equal(1, val, 'Unexpected retry after value.');
-        }
+        },
       });
     });
   },
-  perRoute: function (test) {
+  perRoute(test) {
     test.expect(1);
 
-    var cg = cattleguard({
+    const cg = cattleguard({
       total: 1,
       expire: 1000,
-      perRoute: true
+      perRoute: true,
     }, nc);
 
-    cg({ path: '/test' }, {}, function () {
-      nc.get('cattleguard::/test', function (err, limit) {
+    cg({ path: '/test' }, {}, () => {
+      nc.get('cattleguard::/test', (err, limit) => {
         if (err) {
           test.ok(false);
         }
@@ -98,17 +98,17 @@ module.exports = {
       });
     });
   },
-  perMethod: function (test) {
+  perMethod(test) {
     test.expect(1);
 
-    var cg = cattleguard({
+    const cg = cattleguard({
       total: 1,
       expire: 1000,
-      perMethod: true
+      perMethod: true,
     }, nc);
 
-    cg({ method: 'GET' }, {}, function () {
-      nc.get('cattleguard::GET', function (err, limit) {
+    cg({ method: 'GET' }, {}, () => {
+      nc.get('cattleguard::GET', (err, limit) => {
         if (err) {
           test.ok(false);
         }
@@ -129,20 +129,20 @@ module.exports = {
       });
     });
   },
-  lookup: function (test) {
+  lookup(test) {
     test.expect(2);
 
-    var cg = cattleguard({
+    const cg = cattleguard({
       total: 1,
       expire: 1000,
-      lookup: function () {
+      lookup() {
         test.ok('true');
         return 'test';
-      }
+      },
     }, nc);
 
-    cg({}, {}, function () {
-      nc.get('cattleguard::test', function (err, limit) {
+    cg({}, {}, () => {
+      nc.get('cattleguard::test', (err, limit) => {
         if (err) {
           test.ok(false);
         }
@@ -163,47 +163,47 @@ module.exports = {
       });
     });
   },
-  withPexpire: function (test) {
+  withPexpire(test) {
     test.expect(3);
 
-    var cg = cattleguard(
+    const cg = cattleguard(
       {
         total: 1,
-        expire: 1000
+        expire: 1000,
       },
       {
-        get: function (key, cb) {
+        get(key, cb) {
           cb();
         },
-        set: function (key, val, cb) {
+        set(key, val, cb) {
           cb();
         },
-        pexpire: function (key, time) {
+        pexpire(key, time) {
           test.equal('cattleguard', key, 'Unexpected key.');
           test.equal(1000, time, 'Unexpected expire.');
-        }
+        },
       }
     );
 
-    cg({}, {}, function () {
+    cg({}, {}, () => {
       test.ok(true);
       test.done();
     });
   },
-  alreadyExpired: function (test) {
+  alreadyExpired(test) {
     test.expect(1);
     this.clock.tick(1);
     nc.set(
       'cattleguard',
       JSON.stringify({ total: 1, remaining: 100, reset: 0 }),
-      function (err) {
-        var cg = cattleguard({
+      () => {
+        const cg = cattleguard({
           total: 1,
-          expire: 1000
+          expire: 1000,
         }, nc);
 
-        cg({}, {}, function () {
-          nc.get('cattleguard', function (err, limit) {
+        cg({}, {}, () => {
+          nc.get('cattleguard', (err, limit) => {
             if (err) {
               test.ok(false);
             }
@@ -226,48 +226,48 @@ module.exports = {
       }
     );
   },
-  getError: function (test) {
+  getError(test) {
     test.expect(1);
 
-    var cg = cattleguard(
+    const cg = cattleguard(
       {
         total: 1,
-        expire: 1000
+        expire: 1000,
       },
       {
-        get: function (key, cb) {
+        get(key, cb) {
           cb('uh oh');
-        }
+        },
       }
     );
 
-    cg({}, {}, function (err) {
+    cg({}, {}, (err) => {
       test.equal('uh oh', err, 'Unexpected error.');
       test.done();
     });
   },
-  setError: function (test) {
+  setError(test) {
     test.expect(1);
 
-    var cg = cattleguard(
+    const cg = cattleguard(
       {
         total: 1,
-        expire: 1000
+        expire: 1000,
       },
       {
-        get: function (key, cb) {
+        get(key, cb) {
           cb();
         },
-        set: function (key, val, cb) {
+        set(key, val, cb) {
           cb('uh oh');
-        }
+        },
       }
     );
 
-    cg({}, {}, function (err) {
+    cg({}, {}, (err) => {
       test.equal('uh oh', err, 'Unexpected error.');
       test.done();
     });
   },
-}
+};
 

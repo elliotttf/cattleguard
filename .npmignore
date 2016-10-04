@@ -2,3 +2,5 @@ coverage
 test
 .coveralls.yml
 .travis.yml
+.eslintignore
+.eslintrc.json
