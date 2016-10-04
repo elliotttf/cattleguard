@@ -1,6 +1,6 @@
 {
   "name": "cattleguard",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Rate limiting stampede protection for express.",
   "main": "index.js",
   "scripts": {
