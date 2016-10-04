@@ -10,9 +10,9 @@
  *   - expire: integer, the time period in milliseconds to limit requests.
  *   - onRateLimited: function, the method to execute when a rate limit has been
  *     reached. Accepts:
- *       @param {Request} req
- *       @param {Response} res
- *       @param {function} next
+ *       req: the Request object
+ *       res: the Response object
+ *       next: the next callback to execute
  *   - perRoute: boolean, true if rate limiting should happen per route.
  *     default: false
  *   - perMethod: boolean, true if rate limiting should happen per HTTP method.
@@ -24,76 +24,71 @@
  *   A store to maintain the rate limit counts in. Must provide get and set
  *   methods and _may_ provide a pexpire method with the following signatures:
  *   - get: gets a value from the store.
- *       @param {string} key
- *         The key for the rate limit information.
- *       @param {function} callback
- *         A callback to execute after getting, parameters are err and limit
- *         where limit is the value for the key.
+ *       key: The key for the rate limit information.
+ *       callback: A callback to execute after getting, parameters are err and
+ *         limit where limit is the value for the key.
  *   - set: sets a value in the store.
- *       @param {string} key
- *         The key for the rate limit information.
- *       @param {function} callback
- *         A callback to execute after getting, parameters are err.
+ *       key: The key for the rate limit information.
+ *       callback: A callback to execute after getting, parameters are err.
  *   - pexpire: sets an expire time in milliseconds for a key.
- *       @param {string} key
- *         The key for the rate limit information.
- *       @param {integer} expire
- *         Time in milliseconds before the key expires.
+ *       key: The key for the rate limit information.
+ *       expire: Time in milliseconds before the key expires.
+ *
+ * @returns {function}
+ *   The cattleguard middleware.
  */
-module.exports = function (config, store) {
-  return function (req, res, next) {
-    var key = [ 'cattleguard' ];
+module.exports = (config, store) => (req, res, next) => {
+  let key = ['cattleguard'];
 
-    if (config.perRoute) {
-      key.push(req.path);
-    }
-    if (config.perMethod) {
-      key.push(req.method);
-    }
-    if (typeof config.lookup === 'function') {
-      key.push(config.lookup(req));
+  if (config.perRoute) {
+    key.push(req.path);
+  }
+  if (config.perMethod) {
+    key.push(req.method);
+  }
+  if (typeof config.lookup === 'function') {
+    key.push(config.lookup(req));
+  }
+
+  key = key.join('::');
+
+  store.get(key, (getErr, limit) => {
+    if (getErr) {
+      return next(getErr);
     }
 
-    key = key.join('::');
+    const now = Date.now();
+    const myLimit = limit ? JSON.parse(limit) : {
+      total: config.total,
+      remaining: config.total,
+      reset: now + config.expire,
+    };
 
-    store.get(key, function (getErr, limit) {
-      if (getErr) {
-        return next(getErr);
+    if (now > myLimit.reset) {
+      myLimit.reset = now + config.expire;
+      myLimit.remaining = config.total;
+    }
+
+    myLimit.remaining -= 1;
+    return store.set(key, JSON.stringify(myLimit), (setErr) => {
+      if (setErr) {
+        return next(setErr);
       }
 
-      var now = Date.now();
-      limit = limit ? JSON.parse(limit) : {
-        total: config.total,
-        remaining: config.total,
-        reset: now + config.expire
-      };
-
-      if (now > limit.reset) {
-        limit.reset = now + config.expire;
-        limit.remaining = config.total;
+      // For redis clients, set an expire.
+      if (typeof store.pexpire === 'function') {
+        store.pexpire(key, (myLimit.reset - now));
       }
 
-      limit.remaining -= 1;
-      store.set(key, JSON.stringify(limit), function (setErr) {
-        if (setErr) {
-          return next(setErr);
-        }
+      if (myLimit.remaining >= 0) {
+        return next();
+      }
 
-        // For redis clients, set an expire.
-        if (typeof store.pexpire === 'function') {
-          store.pexpire(key, (limit.reset - now));
-        }
+      const after = Math.ceil((myLimit.reset - now) / 1000);
+      res.set('Retry-After', after);
 
-        if (limit.remaining >= 0) {
-          return next();
-        }
-
-        var after = Math.ceil((limit.reset - now) / 1000);
-        res.set('Retry-After', after);
-
-        config.onRateLimited(req, res, next);
-      })
+      return config.onRateLimited(req, res, next);
     });
-  };
+  });
 };
 
