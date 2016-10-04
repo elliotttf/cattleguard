@@ -8,15 +8,15 @@ An express middleware for rate limiting an application to provide stampede prote
 ## Usage
 
 ```javascript
-var cattleguard = require('cattleguard');
-var redis = require('redis');
+const cattleguard = require('cattleguard');
+const redis = require('redis');
 
-var client = redis.createClient();
+const client = redis.createClient();
 
-var config = {
+const config = {
  total: 300,
  expire: 1000,
- onRateLimited: function (req, res, next) {
+ onRateLimited: (req, res, next) => {
     res.status(503).send('Service Unavailable');
  }
 };
@@ -26,7 +26,7 @@ app.use(cattleguard(config, client));
 
 // Rate limiting for a single route.
 config.perRoute = true;
-app.post('/blogs', cattleguard(config, client), function (req, res, next) {
+app.post('/blogs', cattleguard(config, client), (req, res, next) => {
   // ...
 });
 
@@ -34,18 +34,16 @@ app.post('/blogs', cattleguard(config, client), function (req, res, next) {
 config.perMethod = true;
 app.route('/blogs')
   .all(cattleguard(config, client))
-  .post(function (req, res, next) {
+  .post((req, res, next) => {
     // Will have its own rate limit.
   })
-  .get(function (req, res, next) {
+  .get((req, res, next) => {
     // Will have its own rate limit.
   });
 
 // Rate limiting based on request criteriea.
-config.lookup = function (req) {
-  return req.headers['x-forwarded-for'];
-};
-app.post('/blogs', cattleguard(config, client), function (req, res, next) {
+config.lookup = (req) => req.headers['x-forwarded-for'];
+app.post('/blogs', cattleguard(config, client), (req, res, next) => {
   // ...
 });
 
