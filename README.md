@@ -69,14 +69,15 @@ app.post('/blogs', cattleguard(config, client), (req, res, next) => {
     This will have the effect of creating a per-user rate limit.
     default: `undefined`
 * `store` - A store to maintain the rate limit counts in. Must provide get and
-  setmethods and _may_ provide a pexpire method with the following signatures:
+  set methods and _may_ provide a pexpire method with the following signatures:
   * `get`: gets a value from the store.
     * `key` - The key for the rate limit information.
     * `callback` - A callback to execute after getting, parameters are err and
       limit where limit is the value for the key.
   * `set`: sets a value in the store.
     * `key` - The key for the rate limit information.
-    * `callback` - A callback to execute after getting, parameters are err.
+    * `value` - The value to store.
+    * `callback` - A callback to execute after setting, parameters are err.
   * `pexpire`: sets an expire time in milliseconds for a key.
     * `key` - The key for the rate limit information.
     * `expire` - Time in milliseconds before the key expires.

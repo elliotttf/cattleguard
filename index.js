@@ -29,7 +29,8 @@
  *         limit where limit is the value for the key.
  *   - set: sets a value in the store.
  *       key: The key for the rate limit information.
- *       callback: A callback to execute after getting, parameters are err.
+ *       value: The value to store.
+ *       callback: A callback to execute after setting, parameters are err.
  *   - pexpire: sets an expire time in milliseconds for a key.
  *       key: The key for the rate limit information.
  *       expire: Time in milliseconds before the key expires.
