@@ -1,16 +1,16 @@
 {
   "name": "cattleguard",
-  "version": "1.0.1",
   "description": "Rate limiting stampede protection for express.",
   "main": "index.js",
   "scripts": {
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "lint": "eslint .",
-    "test": "istanbul cover --print both nodeunit test/index.js"
+    "test": "istanbul cover --print both nodeunit test/index.js",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elliotttf/cattleguard.git"
+    "url": "https://github.com/elliotttf/cattleguard.git"
   },
   "keywords": [
     "express",
@@ -33,7 +33,8 @@
     "istanbul": "^0.4.5",
     "node-cache": "^4.1.0",
     "nodeunit": "^0.10.2",
-    "sinon": "^1.17.6"
+    "sinon": "^1.17.6",
+    "semantic-release": "^4.3.5"
   },
   "engines": {
     "node": ">=6"
