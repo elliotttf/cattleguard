@@ -32,15 +32,7 @@ module.exports = {
         }
         else {
           limit = JSON.parse(limit);
-          test.deepEqual(
-            {
-              total: 1,
-              remaining: 0,
-              reset: 1000,
-            },
-            limit,
-            'Unexpected limit'
-          );
+          test.deepEqual({ total: 1, remaining: 0, reset: 1000 }, limit, 'Unexpected limit');
         }
 
         test.done();
@@ -83,15 +75,7 @@ module.exports = {
         }
         else {
           limit = JSON.parse(limit);
-          test.deepEqual(
-            {
-              total: 1,
-              remaining: 0,
-              reset: 1000,
-            },
-            limit,
-            'Unexpected limit'
-          );
+          test.deepEqual({ total: 1, remaining: 0, reset: 1000 }, limit, 'Unexpected limit');
         }
 
         test.done();
@@ -114,15 +98,7 @@ module.exports = {
         }
         else {
           limit = JSON.parse(limit);
-          test.deepEqual(
-            {
-              total: 1,
-              remaining: 0,
-              reset: 1000,
-            },
-            limit,
-            'Unexpected limit'
-          );
+          test.deepEqual({ total: 1, remaining: 0, reset: 1000 }, limit, 'Unexpected limit');
         }
 
         test.done();
@@ -148,15 +124,7 @@ module.exports = {
         }
         else {
           limit = JSON.parse(limit);
-          test.deepEqual(
-            {
-              total: 1,
-              remaining: 0,
-              reset: 1000,
-            },
-            limit,
-            'Unexpected limit'
-          );
+          test.deepEqual({ total: 1, remaining: 0, reset: 1000 }, limit, 'Unexpected limit');
         }
 
         test.done();
@@ -166,24 +134,18 @@ module.exports = {
   withPexpire(test) {
     test.expect(3);
 
-    const cg = cattleguard(
-      {
-        total: 1,
-        expire: 1000,
+    const cg = cattleguard({ total: 1, expire: 1000 }, {
+      get(key, cb) {
+        cb();
       },
-      {
-        get(key, cb) {
-          cb();
-        },
-        set(key, val, cb) {
-          cb();
-        },
-        pexpire(key, time) {
-          test.equal('cattleguard', key, 'Unexpected key.');
-          test.equal(1000, time, 'Unexpected expire.');
-        },
-      }
-    );
+      set(key, val, cb) {
+        cb();
+      },
+      pexpire(key, time) {
+        test.equal('cattleguard', key, 'Unexpected key.');
+        test.equal(1000, time, 'Unexpected expire.');
+      },
+    });
 
     cg({}, {}, () => {
       test.ok(true);
@@ -193,53 +155,35 @@ module.exports = {
   alreadyExpired(test) {
     test.expect(1);
     this.clock.tick(1);
-    nc.set(
-      'cattleguard',
-      JSON.stringify({ total: 1, remaining: 100, reset: 0 }),
-      () => {
-        const cg = cattleguard({
-          total: 1,
-          expire: 1000,
-        }, nc);
+    nc.set('cattleguard', JSON.stringify({ total: 1, remaining: 100, reset: 0 }), () => {
+      const cg = cattleguard({
+        total: 1,
+        expire: 1000,
+      }, nc);
 
-        cg({}, {}, () => {
-          nc.get('cattleguard', (err, limit) => {
-            if (err) {
-              test.ok(false);
-            }
-            else {
-              limit = JSON.parse(limit);
-              test.deepEqual(
-                {
-                  total: 1,
-                  remaining: 0,
-                  reset: 1001,
-                },
-                limit,
-                'Unexpected limit'
-              );
-            }
+      cg({}, {}, () => {
+        nc.get('cattleguard', (err, limit) => {
+          if (err) {
+            test.ok(false);
+          }
+          else {
+            limit = JSON.parse(limit);
+            test.deepEqual({ total: 1, remaining: 0, reset: 1001 }, limit, 'Unexpected limit');
+          }
 
-            test.done();
-          });
+          test.done();
         });
-      }
-    );
+      });
+    });
   },
   getError(test) {
     test.expect(1);
 
-    const cg = cattleguard(
-      {
-        total: 1,
-        expire: 1000,
+    const cg = cattleguard({ total: 1, expire: 1000 }, {
+      get(key, cb) {
+        cb('uh oh');
       },
-      {
-        get(key, cb) {
-          cb('uh oh');
-        },
-      }
-    );
+    });
 
     cg({}, {}, (err) => {
       test.equal('uh oh', err, 'Unexpected error.');
@@ -249,20 +193,14 @@ module.exports = {
   setError(test) {
     test.expect(1);
 
-    const cg = cattleguard(
-      {
-        total: 1,
-        expire: 1000,
+    const cg = cattleguard({ total: 1, expire: 1000 }, {
+      get(key, cb) {
+        cb();
       },
-      {
-        get(key, cb) {
-          cb();
-        },
-        set(key, val, cb) {
-          cb('uh oh');
-        },
-      }
-    );
+      set(key, val, cb) {
+        cb('uh oh');
+      },
+    });
 
     cg({}, {}, (err) => {
       test.equal('uh oh', err, 'Unexpected error.');
