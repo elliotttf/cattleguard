@@ -34,7 +34,7 @@
     "node-cache": "^4.1.0",
     "nodeunit": "^0.10.2",
     "semantic-release": "^6.3.2",
-    "sinon": "^1.17.6"
+    "sinon": "^2.0.0"
   },
   "engines": {
     "node": ">=6"
