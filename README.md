@@ -1,5 +1,7 @@
 # Cattleguard
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/elliotttf/cattleguard.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://travis-ci.org/elliotttf/cattleguard.svg?branch=master)](https://travis-ci.org/elliotttf/cattleguard)
 [![Coverage Status](https://coveralls.io/repos/github/elliotttf/cattleguard/badge.svg?branch=master)](https://coveralls.io/github/elliotttf/cattleguard?branch=master)
 
