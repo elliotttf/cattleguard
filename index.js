@@ -39,6 +39,8 @@
  *   The cattleguard middleware.
  */
 module.exports = (config, store) => (req, res, next) => {
+  // The key is the unique identifier for a subject. Different keys will have
+  // independent rate limits applied.
   let key = ['cattleguard'];
 
   if (config.perRoute) {
@@ -48,6 +50,8 @@ module.exports = (config, store) => (req, res, next) => {
     key.push(req.method);
   }
   if (typeof config.lookup === 'function') {
+    // Allow the application to create variants based on any logic depending on
+    // the request coming in.
     key.push(config.lookup(req));
   }
 
@@ -59,6 +63,9 @@ module.exports = (config, store) => (req, res, next) => {
     }
 
     const now = Date.now();
+    // If the key was not found, initialize as a brand new rate limit. This can
+    // happen if the subject never made a request or if the key was expired in
+    // the store.
     const myLimit = limit ? JSON.parse(limit) : {
       total: config.total,
       remaining: config.total,
@@ -70,22 +77,29 @@ module.exports = (config, store) => (req, res, next) => {
       myLimit.remaining = config.total;
     }
 
+    // Decrement the remaining hits and save the new count back in the store.
+    // Since express may be running in multiple different parallel processes,
+    // the hits need to be recorded in a shared centralized location.
     myLimit.remaining -= 1;
     return store.set(key, JSON.stringify(myLimit), (setErr) => {
       if (setErr) {
         return next(setErr);
       }
 
-      // For redis clients, set an expire.
+      // For redis clients, set an expire. This will delete the subject entry
+      // after a while.
       if (typeof store.pexpire === 'function') {
         store.pexpire(key, (myLimit.reset - now));
       }
 
+      // Proceed normally.
       if (myLimit.remaining >= 0) {
         return next();
       }
 
       const after = Math.ceil((myLimit.reset - now) / 1000);
+      // See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.37
+      // and https://tools.ietf.org/html/rfc6585#section-4.
       res.set('Retry-After', after);
 
       return config.onRateLimited(req, res, next);
