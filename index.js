@@ -52,7 +52,7 @@ module.exports = (config, store) => (req, res, next) => {
   if (typeof config.lookup === 'function') {
     // Allow the application to create variants based on any logic depending on
     // the request coming in.
-    key.push(config.lookup(req));
+    key = key.concat(config.lookup(req));
   }
 
   key = key.join('::');
