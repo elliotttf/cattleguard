@@ -22,7 +22,7 @@
  *     default: undefined
  * @param {*} store
  *   A store to maintain the rate limit counts in. Must provide get and set
- *   methods and _may_ provide a pexpire method with the following signatures:
+ *   methods with the following signatures:
  *   - get: gets a value from the store.
  *       key: The key for the rate limit information.
  *       callback: A callback to execute after getting, parameters are err and
@@ -30,10 +30,8 @@
  *   - set: sets a value in the store.
  *       key: The key for the rate limit information.
  *       value: The value to store.
+ *       ttl: The timeout in seconds for the rate limit information.
  *       callback: A callback to execute after setting, parameters are err.
- *   - pexpire: sets an expire time in milliseconds for a key.
- *       key: The key for the rate limit information.
- *       expire: Time in milliseconds before the key expires.
  *
  * @returns {function}
  *   The cattleguard middleware.
@@ -81,29 +79,19 @@ module.exports = (config, store) => (req, res, next) => {
     // Since express may be running in multiple different parallel processes,
     // the hits need to be recorded in a shared centralized location.
     myLimit.remaining -= 1;
-    return store.set(key, JSON.stringify(myLimit), (setErr) => {
+    const retryAfter = Math.ceil((myLimit.reset - now) / 1000);
+    return store.set(key, JSON.stringify(myLimit), retryAfter, (setErr) => {
       if (setErr) {
         return next(setErr);
       }
 
-      // For redis clients, set an expire. This will delete the subject entry
-      // after a while.
-      if (typeof store.pexpire === 'function') {
-        store.pexpire(key, (myLimit.reset - now));
-      }
-
-      // Proceed normally.
       if (myLimit.remaining >= 0) {
         return next();
       }
 
-      const after = Math.ceil((myLimit.reset - now) / 1000);
-      // See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.37
-      // and https://tools.ietf.org/html/rfc6585#section-4.
-      res.set('Retry-After', after);
+      res.set('Retry-After', retryAfter);
 
       return config.onRateLimited(req, res, next);
     });
   });
 };
-
