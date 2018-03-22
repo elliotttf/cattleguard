@@ -13,7 +13,26 @@ An express middleware for rate limiting an application to provide stampede prote
 const cattleguard = require('cattleguard');
 const redis = require('redis');
 
-const client = redis.createClient();
+const rClient = redis.createClient();
+
+// Cattleguard now expects the `set` method to include a ttl value. If your
+// store does not accept this value by default you will need to wrap your store
+// with a method that performs both the set and expire.
+// For example:
+const client = {
+  get(...args) {
+    rClient.get(...args);
+  },
+  set(key, val, ttl, cb) {
+    rClient.set(key, val, (err) => {
+      if (err) {
+        return cb(err);
+      }
+
+      rClient.expire(ttl, cb);
+    })
+  }
+}
 
 const config = {
  total: 300,
@@ -71,7 +90,7 @@ app.post('/blogs', cattleguard(config, client), (req, res, next) => {
     This will have the effect of creating a per-user rate limit.
     default: `undefined`
 * `store` - A store to maintain the rate limit counts in. Must provide get and
-  set methods and _may_ provide a pexpire method with the following signatures:
+  set methods with the following signatures:
   * `get`: gets a value from the store.
     * `key` - The key for the rate limit information.
     * `callback` - A callback to execute after getting, parameters are err and
@@ -79,14 +98,11 @@ app.post('/blogs', cattleguard(config, client), (req, res, next) => {
   * `set`: sets a value in the store.
     * `key` - The key for the rate limit information.
     * `value` - The value to store.
+    * `ttl` - The timeout in seconds for the rate limit information.
     * `callback` - A callback to execute after setting, parameters are err.
-  * `pexpire`: sets an expire time in milliseconds for a key.
-    * `key` - The key for the rate limit information.
-    * `expire` - Time in milliseconds before the key expires.
 
 ## Credits
 
 This module was heavily influenced by [express-limiter](https://www.npmjs.com/package/express-limiter) but allows application rate limiting in the interest of guarding
-against backend failures, rather than the consumer only rate limiting appraoch that
+against backend failures, rather than the consumer only rate limiting approach that
 express-limiter takes.
-

@@ -4,7 +4,19 @@ const cattleguard = require('../');
 const NodeCache = require('node-cache');
 const sinon = require('sinon');
 
-const nc = new NodeCache();
+const ncClient = new NodeCache();
+
+const nc = {
+  get(...args) {
+    ncClient.get(...args);
+  },
+  set(key, val, ttl, cb) {
+    ncClient.set(key, val, cb);
+  },
+  flushAll() {
+    ncClient.flushAll();
+  },
+};
 
 module.exports = {
   setUp(cb) {
@@ -131,31 +143,10 @@ module.exports = {
       });
     });
   },
-  withPexpire(test) {
-    test.expect(3);
-
-    const cg = cattleguard({ total: 1, expire: 1000 }, {
-      get(key, cb) {
-        cb();
-      },
-      set(key, val, cb) {
-        cb();
-      },
-      pexpire(key, time) {
-        test.equal('cattleguard', key, 'Unexpected key.');
-        test.equal(1000, time, 'Unexpected expire.');
-      },
-    });
-
-    cg({}, {}, () => {
-      test.ok(true);
-      test.done();
-    });
-  },
   alreadyExpired(test) {
     test.expect(1);
     this.clock.tick(1);
-    nc.set('cattleguard', JSON.stringify({ total: 1, remaining: 100, reset: 0 }), () => {
+    nc.set('cattleguard', JSON.stringify({ total: 1, remaining: 100, reset: 0 }), 1000, () => {
       const cg = cattleguard({
         total: 1,
         expire: 1000,
@@ -197,7 +188,7 @@ module.exports = {
       get(key, cb) {
         cb();
       },
-      set(key, val, cb) {
+      set(key, val, ttl, cb) {
         cb('uh oh');
       },
     });
@@ -208,4 +199,3 @@ module.exports = {
     });
   },
 };
-
