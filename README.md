@@ -86,8 +86,9 @@ app.post('/blogs', cattleguard(config, client), (req, res, next) => {
     default: `false`
   * `perMethod`: boolean, true if rate limiting should happen per HTTP method.
     default: `false`
-  * `lookup`: function, used to return an identifier for the user requesting.
-    This will have the effect of creating a per-user rate limit.
+  * `lookup`: function, used to return an identifier (or array of identifier
+    components) for the user requesting. This will have the effect of creating
+    a per-user rate limit.
     default: `undefined`
 * `store` - A store to maintain the rate limit counts in. Must provide get and
   set methods with the following signatures:
